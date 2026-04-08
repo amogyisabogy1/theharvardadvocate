@@ -2,14 +2,11 @@
 import React from "react";
 import Link from "next/link";
 import { NextSeo } from "next-seo";
+import allPieces from "../../lib/data/womensissue.json";
 
 const pieceSx = {
-  ".fontMod": { fontFamily: "Bernhard Gothic Medium, serif" },
-
   ".pieceHeader": {
     borderBottom: "1px solid #000",
-    paddingBottom: "1em",
-    marginBottom: "2em",
     padding: "2em 2vw 1em",
     maxWidth: "760px",
     margin: "0 auto",
@@ -34,18 +31,16 @@ const pieceSx = {
     fontStyle: "italic",
     color: "#444",
   },
-
   ".pieceBody": {
     maxWidth: "760px",
-    margin: "0 auto",
-    padding: "0 2vw 4em",
+    margin: "2em auto 4em",
+    padding: "0 2vw",
     fontFamily: "EB Garamond, serif",
     fontSize: "18px",
-    lineHeight: 1.7,
+    lineHeight: 1.75,
     color: "#000",
     p: { marginBottom: "1.4em" },
   },
-
   ".artImageWrap": {
     maxWidth: "800px",
     margin: "0 auto 1.5em",
@@ -64,7 +59,6 @@ const pieceSx = {
     marginTop: "0.5em",
     textAlign: "center",
   },
-
   ".backLink": {
     display: "inline-block",
     fontFamily: "Bernhard Gothic Medium, serif",
@@ -89,19 +83,13 @@ function resolveImage(source) {
   return null;
 }
 
-// Very lightweight markdown → HTML for the body content
 function mdToHtml(text) {
   if (!text) return "";
   return text
-    // Bold italic __*text*__
     .replace(/__\*(.+?)\*__/g, "<strong><em>$1</em></strong>")
-    // Bold __text__
     .replace(/__(.+?)__/g, "<strong>$1</strong>")
-    // Italic *text* (not **, not inside words)
     .replace(/(?<!\*)\*(?!\*)(.+?)(?<!\*)\*(?!\*)/g, "<em>$1</em>")
-    // Double newlines → paragraph break (if not already html)
     .replace(/\n\n+(?!<)/g, "<br /><br />")
-    // Single newline → space (preserve <br /> that are already there)
     .replace(/(?<!>)\n(?!<)/g, " ");
 }
 
@@ -149,10 +137,7 @@ export default function WomensPiece({ piece }) {
                 />
               </div>
             )}
-            <div
-              className="pieceBody"
-              dangerouslySetInnerHTML={{ __html: htmlBody }}
-            />
+            <div className="pieceBody" dangerouslySetInnerHTML={{ __html: htmlBody }} />
           </>
         )}
       </div>
@@ -161,102 +146,12 @@ export default function WomensPiece({ piece }) {
 }
 
 export async function getStaticPaths() {
-  const path = require("path");
-  const fs = require("fs");
-
-  const baseDir = path.join(
-    process.cwd(), "src", "womensissue", "src", "pages", "pieces"
-  );
-
-  function parseFrontmatterPath(content) {
-    const match = content.match(/^---[\s\S]*?path:\s*["']?([^\n"']+)["']?/);
-    return match ? match[1].trim().replace(/^\//, "") : null;
-  }
-
-  function slugsFromDir(dirPath) {
-    if (!fs.existsSync(dirPath)) return [];
-    return fs.readdirSync(dirPath)
-      .filter((f) => f.endsWith(".md"))
-      .map((file) => {
-        const raw = fs.readFileSync(path.join(dirPath, file), "utf8");
-        const slug = parseFrontmatterPath(raw) || file.replace(".md", "");
-        return slug;
-      });
-  }
-
-  const dirs = [
-    path.join(baseDir, "art"),
-    path.join(baseDir, "written", "fiction"),
-    path.join(baseDir, "written", "poetry"),
-    path.join(baseDir, "written", "personalessay"),
-    path.join(baseDir, "interviews"),
-  ];
-
-  const slugs = dirs.flatMap(slugsFromDir);
-  const paths = slugs.map((slug) => ({ params: { slug } }));
-
+  const paths = allPieces.map((p) => ({ params: { slug: p.slug } }));
   return { paths, fallback: false };
 }
 
 export async function getStaticProps({ params }) {
-  const path = require("path");
-  const fs = require("fs");
-
-  const baseDir = path.join(
-    process.cwd(), "src", "womensissue", "src", "pages", "pieces"
-  );
-
-  const categoryDirs = [
-    { dirPath: path.join(baseDir, "art"), category: "art" },
-    { dirPath: path.join(baseDir, "written", "fiction"), category: "fiction" },
-    { dirPath: path.join(baseDir, "written", "poetry"), category: "poetry" },
-    { dirPath: path.join(baseDir, "written", "personalessay"), category: "personalessay" },
-    { dirPath: path.join(baseDir, "interviews"), category: "interviews" },
-  ];
-
-  function parseFrontmatter(content) {
-    const match = content.match(/^---\r?\n([\s\S]*?)\r?\n---/);
-    if (!match) return {};
-    const fm = {};
-    match[1].split(/\r?\n/).forEach((line) => {
-      const colonIdx = line.indexOf(":");
-      if (colonIdx === -1) return;
-      const key = line.slice(0, colonIdx).trim();
-      const val = line.slice(colonIdx + 1).trim().replace(/^["']|["']$/g, "");
-      fm[key] = val;
-    });
-    return fm;
-  }
-
-  function parseBody(content) {
-    return content.replace(/^---\r?\n[\s\S]*?\r?\n---\r?\n?/, "").trim();
-  }
-
-  for (const { dirPath, category } of categoryDirs) {
-    if (!fs.existsSync(dirPath)) continue;
-    for (const file of fs.readdirSync(dirPath).filter((f) => f.endsWith(".md"))) {
-      const raw = fs.readFileSync(path.join(dirPath, file), "utf8");
-      const fm = parseFrontmatter(raw);
-      const slug = fm.path ? fm.path.replace(/^\//, "") : file.replace(".md", "");
-      if (slug === params.slug) {
-        return {
-          props: {
-            piece: {
-              slug,
-              title: fm.title || slug,
-              author: fm.author || "",
-              type: fm.type || "",
-              source: fm.source || "",
-              interview: fm.interview || "",
-              category,
-              body: parseBody(raw),
-            },
-          },
-          revalidate: 86400,
-        };
-      }
-    }
-  }
-
-  return { notFound: true };
+  const piece = allPieces.find((p) => p.slug === params.slug);
+  if (!piece) return { notFound: true };
+  return { props: { piece } };
 }

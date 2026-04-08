@@ -2,6 +2,7 @@
 import React from "react";
 import Link from "next/link";
 import { NextSeo } from "next-seo";
+import allPosts from "../../lib/data/blog-posts.json";
 
 const blogPostSx = {
   ".postHeader": {
@@ -89,49 +90,21 @@ export default function BlogPost({ post }) {
             {post.category_name && <span> &bull; {post.category_name}</span>}
           </div>
           <h1 className="postTitle">{post.title}</h1>
-          {post.author_name && (
-            <div className="postAuthor">By {post.author_name}</div>
-          )}
+          {post.author_name && <div className="postAuthor">By {post.author_name}</div>}
         </div>
-        <div
-          className="postBody"
-          dangerouslySetInnerHTML={{ __html: post.body || "" }}
-        />
+        <div className="postBody" dangerouslySetInnerHTML={{ __html: post.body || "" }} />
       </div>
     </>
   );
 }
 
 export async function getStaticPaths() {
-  const path = require("path");
-  const fs = require("fs");
-
-  let slugs = [];
-  try {
-    const filePath = path.join(process.cwd(), "..", "export_try1.json");
-    const data = JSON.parse(fs.readFileSync(filePath, "utf8"));
-    slugs = data.filter((p) => p.slug).map((p) => p.slug);
-  } catch (e) {
-    console.error("Could not load blog archive for paths:", e.message);
-  }
-
-  return {
-    paths: slugs.map((slug) => ({ params: { slug } })),
-    fallback: false,
-  };
+  const paths = allPosts.map((p) => ({ params: { slug: p.slug } }));
+  return { paths, fallback: false };
 }
 
 export async function getStaticProps({ params }) {
-  const path = require("path");
-  const fs = require("fs");
-
-  try {
-    const filePath = path.join(process.cwd(), "..", "export_try1.json");
-    const data = JSON.parse(fs.readFileSync(filePath, "utf8"));
-    const post = data.find((p) => p.slug === params.slug);
-    if (!post) return { notFound: true };
-    return { props: { post }, revalidate: 86400 };
-  } catch (e) {
-    return { notFound: true };
-  }
+  const post = allPosts.find((p) => p.slug === params.slug);
+  if (!post) return { notFound: true };
+  return { props: { post } };
 }

@@ -2,6 +2,7 @@
 import React, { useState } from "react";
 import Link from "next/link";
 import { NextSeo } from "next-seo";
+import allPieces from "../lib/data/womensissue.json";
 
 const womenSx = {
   ".fontMod": { fontFamily: "Bernhard Gothic Medium, serif" },
@@ -111,6 +112,14 @@ const womenSx = {
     display: "block",
     borderBottom: "1px solid rgba(0,0,0,0.08)",
   },
+  ".pieceCardPlaceholder": {
+    aspectRatio: "4/3",
+    background: "linear-gradient(135deg, #f5f0eb 0%, #e8ddd4 100%)",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    borderBottom: "1px solid rgba(0,0,0,0.08)",
+  },
   ".pieceCardBody": {
     padding: "1em 1.2em 1.2em",
     flex: 1,
@@ -159,11 +168,10 @@ const CATEGORIES = [
   { key: "interviews", label: "Interviews" },
 ];
 
-function resolveImage(source, category) {
+function resolveImage(source) {
   if (!source || source.trim() === "") return null;
-  if (source.startsWith("./artimages/")) {
+  if (source.startsWith("./artimages/"))
     return `/womensissue/art/${source.replace("./artimages/", "")}`;
-  }
   const iconsMatch = source.match(/icons\/(.+)$/);
   if (iconsMatch) return `/womensissue/icons/${iconsMatch[1]}`;
   return null;
@@ -183,7 +191,6 @@ export default function WomensIssue({ pieces }) {
         canonical="https://theharvardadvocate.com/women"
       />
       <div sx={womenSx}>
-        {/* Hero */}
         <div className="heroSection">
           <div className="heroOverlay" />
           <div className="heroInner">
@@ -195,7 +202,6 @@ export default function WomensIssue({ pieces }) {
           </div>
         </div>
 
-        {/* Genre nav */}
         <nav className="genreNav">
           {CATEGORIES.map((cat) => (
             <button
@@ -208,33 +214,15 @@ export default function WomensIssue({ pieces }) {
           ))}
         </nav>
 
-        {/* Grid */}
         <div className="pieceGrid">
           {filtered.map((piece) => {
-            const imgSrc = resolveImage(piece.source, piece.category);
+            const imgSrc = resolveImage(piece.source);
             return (
-              <Link
-                key={piece.slug}
-                href={`/women/${piece.slug}`}
-                className="pieceCard"
-              >
-                {imgSrc && (
-                  <img
-                    src={imgSrc}
-                    alt={piece.title}
-                    className="pieceCardImg"
-                    loading="lazy"
-                  />
-                )}
-                {!imgSrc && (
-                  <div style={{
-                    aspectRatio: "4/3",
-                    background: "linear-gradient(135deg, #f5f0eb 0%, #e8ddd4 100%)",
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    borderBottom: "1px solid rgba(0,0,0,0.08)",
-                  }}>
+              <Link key={piece.slug} href={`/women/${piece.slug}`} className="pieceCard">
+                {imgSrc ? (
+                  <img src={imgSrc} alt={piece.title} className="pieceCardImg" loading="lazy" />
+                ) : (
+                  <div className="pieceCardPlaceholder">
                     <span style={{ fontFamily: "Bernhard Gothic Medium, serif", fontSize: "28px", opacity: 0.3 }}>
                       &#9670;
                     </span>
@@ -259,63 +247,7 @@ export default function WomensIssue({ pieces }) {
 }
 
 export async function getStaticProps() {
-  const path = require("path");
-  const fs = require("fs");
-
-  const baseDir = path.join(
-    process.cwd(), "src", "womensissue", "src", "pages", "pieces"
-  );
-
-  function parseFrontmatter(content) {
-    const match = content.match(/^---\r?\n([\s\S]*?)\r?\n---/);
-    if (!match) return {};
-    const fm = {};
-    match[1].split(/\r?\n/).forEach((line) => {
-      const colonIdx = line.indexOf(":");
-      if (colonIdx === -1) return;
-      const key = line.slice(0, colonIdx).trim();
-      const val = line.slice(colonIdx + 1).trim().replace(/^["']|["']$/g, "");
-      fm[key] = val;
-    });
-    return fm;
-  }
-
-  function parseBody(content) {
-    return content.replace(/^---\r?\n[\s\S]*?\r?\n---\r?\n?/, "").trim();
-  }
-
-  function loadDir(dirPath, category) {
-    if (!fs.existsSync(dirPath)) return [];
-    return fs.readdirSync(dirPath)
-      .filter((f) => f.endsWith(".md"))
-      .map((file) => {
-        const raw = fs.readFileSync(path.join(dirPath, file), "utf8");
-        const fm = parseFrontmatter(raw);
-        const body = parseBody(raw);
-        const slug = fm.path ? fm.path.replace(/^\//, "") : file.replace(".md", "");
-        return {
-          slug,
-          title: fm.title || slug,
-          author: fm.author || "",
-          type: fm.type || "",
-          source: fm.source || "",
-          interview: fm.interview || "",
-          category,
-          body,
-        };
-      });
-  }
-
-  const pieces = [
-    ...loadDir(path.join(baseDir, "art"), "art"),
-    ...loadDir(path.join(baseDir, "written", "fiction"), "fiction"),
-    ...loadDir(path.join(baseDir, "written", "poetry"), "poetry"),
-    ...loadDir(path.join(baseDir, "written", "personalessay"), "personalessay"),
-    ...loadDir(path.join(baseDir, "interviews"), "interviews"),
-  ];
-
-  return {
-    props: { pieces },
-    revalidate: 86400,
-  };
+  // Strip body from listing to keep page data small
+  const pieces = allPieces.map(({ body: _body, ...rest }) => rest);
+  return { props: { pieces } };
 }

@@ -1,6 +1,7 @@
 /** @jsxImportSource theme-ui */
 import React, { useState } from "react";
 import { NextSeo } from "next-seo";
+import blogListing from "../lib/data/blog-listing.json";
 
 const POSTS_PER_PAGE = 20;
 
@@ -165,22 +166,5 @@ export default function BlogArchive({ posts }) {
 }
 
 export async function getStaticProps() {
-  const path = require("path");
-  const fs = require("fs");
-  let posts = [];
-  try {
-    const filePath = path.join(process.cwd(), "..", "export_try1.json");
-    const raw = fs.readFileSync(filePath, "utf8");
-    const data = JSON.parse(raw);
-    posts = data
-      .filter((p) => p.title && p.slug)
-      .sort((a, b) => new Date(b.created) - new Date(a.created));
-  } catch (e) {
-    console.error("Could not load blog archive:", e.message);
-  }
-
-  return {
-    props: { posts },
-    revalidate: 86400,
-  };
+  return { props: { posts: blogListing } };
 }
