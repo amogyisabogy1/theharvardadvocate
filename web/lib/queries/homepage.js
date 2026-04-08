@@ -211,6 +211,11 @@ const getArchivedContent = `*[_type == "contentItem" && ("Fiction" in sections[]
                       sections[]->{title, slug},
                   }`;
 
+const getRecentArticles = `*[_type == "contentItem"] | order(publishedAt desc)[0...5] {
+                      title,
+                      slug
+                  }`;
+
 const getResources = `
 {
   "itemData": ${getItemData},
@@ -227,7 +232,8 @@ const getResources = `
   "blog2": ${getBlog2},
   "blog3": ${getBlog3},
   "instagram": ${getInstagram},
-  "archivedContent": ${getArchivedContent}
+  "archivedContent": ${getArchivedContent},
+  "recentArticles": ${getRecentArticles}
 }`;
 
 export { getResources };

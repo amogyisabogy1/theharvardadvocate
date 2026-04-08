@@ -225,6 +225,7 @@ export default function Homepage({
   Blog3,
   instagramImages,
   fromTheArchivesContent,
+  recentArticles,
 }) {
   const isMobile = useIsMobile();
 
@@ -272,6 +273,38 @@ export default function Homepage({
           The Harvard Advocate - America's Oldest College Literary Magazine
         </h1>
         <RandomUpdate onUpdate={handleUpdate} maxLength={fromTheArchivesContent.length} />
+
+        {recentArticles && recentArticles.length > 0 && (
+          <div style={{
+            borderTop: "1px solid rgba(0,0,0,0.2)",
+            borderBottom: "1px solid rgba(0,0,0,0.2)",
+            overflow: "hidden",
+            padding: "6px 0",
+          }}>
+            <div sx={{
+              display: "flex",
+              whiteSpace: "nowrap",
+              animation: "marqueeScroll 30s linear infinite",
+              "&:hover": { animationPlayState: "paused" },
+              "@keyframes marqueeScroll": {
+                "0%": { transform: "translateX(0)" },
+                "100%": { transform: "translateX(-50%)" },
+              },
+            }}>
+              {[...recentArticles, ...recentArticles].map((article, i) => (
+                <span key={i} style={{ fontFamily: "Bernhard Gothic Medium, serif", fontSize: "15px", flexShrink: 0 }}>
+                  <a
+                    href={`/content/${article.slug?.current}`}
+                    style={{ color: "#000", textDecoration: "none" }}
+                  >
+                    {article.title}
+                  </a>
+                  <span style={{ margin: "0 18px", opacity: 0.4 }}>&#8226;</span>
+                </span>
+              ))}
+            </div>
+          </div>
+        )}
 
         <div className="horizontalContainer">
           <div className="mainContent">
@@ -502,6 +535,7 @@ export async function getStaticProps() {
       Blog3: data.blog3,
       instagramImages: data.instagram,
       fromTheArchivesContent: shuffledArchive,
+      recentArticles: data.recentArticles || [],
     },
     revalidate: 86400, // Revalidate every 24 hours
   };

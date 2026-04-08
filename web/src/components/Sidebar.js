@@ -232,12 +232,13 @@ export default function Sidebar() {
       "/sections/poetry",
       "/sections/columns",
       "/sections/notes",
+      "/blog",
     ].includes(router.pathname)
       ? true
       : false
   );
   const [moreExpanded, setMoreExpanded] = useState(() =>
-    ["/shop", "/donate", "/advertise", "/comp", "/masthead", "/contact"].includes(
+    ["/shop", "/donate", "/advertise", "/comp", "/masthead", "/contact", "/women"].includes(
       router.pathname
     )
       ? true
@@ -408,6 +409,13 @@ export default function Sidebar() {
                 >
                   Notes
                 </Link>
+                <Link
+                  className={`link ${highlightLink("/blog")}`}
+                  href="/blog"
+                  onClick={() => setNavbarExpanded(false)}
+                >
+                  Blog
+                </Link>
               </Grid>
             )}
             <div className="sectionsLink">
@@ -458,10 +466,15 @@ export default function Sidebar() {
                   onClick={()=> setNavbarExpanded(false)}>
                     Comp
                 </a>
-                <a href="/masthead" 
-                  className={`link ${highlightLink("/masthead")}`} 
+                <a href="/masthead"
+                  className={`link ${highlightLink("/masthead")}`}
                   onClick={()=> setNavbarExpanded(false)}>
                     Masthead
+                </a>
+                <a href="/women"
+                  className={`link ${highlightLink("/women")}`}
+                  onClick={() => setNavbarExpanded(false)}>
+                    Women&apos;s Issue
                 </a>
 
                 {isMobile ? (
